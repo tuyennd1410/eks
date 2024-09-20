@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: app2-rs
+spec:
+  replicas: 3 # 3 Pods should exist at all times.
+  selector: # Pods label should be defined in ReplicaSet label selector
+    matchLabels:
+      tier: staging
+  template:
+    metadata:
+      name: staging-pod
+      labels:
+        tier: staging # Atleast 1 Pod label should match with ReplicaSet Label Selector
+    spec:
+      containers:
+        - name: student
+          image: vietaws/eks:v2
+          ports:
+            - containerPort: 8080

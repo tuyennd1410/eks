@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: 23-nlb-eip
+  annotations:
+    # Traffic Routing
+    service.beta.kubernetes.io/aws-load-balancer-name: 23-nlb-eip
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance # specifies the target type to configure for NLB. You can choose between instance and ip
+    #service.beta.kubernetes.io/aws-load-balancer-subnets: subnet-xxxx, mySubnet ## Subnets are auto-discovered if this annotation is not specified, see Subnet Discovery for further details.
+
+    # Health Check Settings
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: traffic-port
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: /
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold: "5"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval: "10" # The controller currently ignores the timeout configuration due to the limitations on the AWS NLB. The default timeout for TCP is 10s and HTTP is 6s.
+
+    # Access Control
+    service.beta.kubernetes.io/load-balancer-source-ranges: 0.0.0.0/0 # specifies the CIDRs that are allowed to access the NLB.
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing" # specifies whether the NLB will be internet-facing or internal
+
+    # AWS Resource Tags
+    service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: Environment=dev,Team=vietaws
+
+    # TLS
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:ap-southeast-1:825770460273:certificate/5b6f8442-6727-45ba-ab70-d8af09c447bc # specifies the ARN of one or more certificates managed by the AWS Certificate Manager.
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: 443, # Specify this annotation if you need both TLS and non-TLS listeners on the same load balancer
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS13-1-2-2021-06 # specifies the Security Policy for NLB frontend connections, allowing you to control the protocol and ciphers.
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp # specifies whether to use TLS or TCP for the backend traffic between the load balancer and the kubernetes pods.
+
+    # External DNS - For creating a Record Set in Route53
+    external-dns.alpha.kubernetes.io/hostname: nlb-eip.eks.vietaws.com
+
+    # Elastic IPs
+    service.beta.kubernetes.io/aws-load-balancer-eip-allocations:
+      eipalloc-123, eipalloc-789
+
+spec:
+  type: LoadBalancer
+  selector:
+    app: home
+  ports:
+    - name: http
+      port: 80 # Creates NLB Port 80 Listener
+      targetPort: 8080 # Creates NLB Port 8080 Target Group-1
+    - name: https
+      port: 443 # Creates NLB Port 443 Listener
+      targetPort: 8080 # Creates NLB Port 8080 Target Group-2

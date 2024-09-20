@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: students-deployment
+  labels:
+    app: students-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: students-app
+  template:
+    metadata:
+      labels:
+        app: students-app
+    spec:
+      containers:
+        - name: students-app
+          image: vietaws/eks:rds
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: rds-psql.default.svc.cluster.local
+            - name: DB_PORT
+              value: '5432'
+            - name: DB_NAME
+              value: 'vietaws'
+            - name: DB_USER
+              value: 'dbadmin' # RDS DB Username is dbadmin
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: psql-db-password
+                  key: db-password
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - nc -z localhost 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: students-svc
+  labels:
+    app: students-svc
+spec:
+  type: NodePort
+  selector:
+    app: students-app
+  ports:
+    - port: 8080
+      targetPort: 8080
+      # nodePort: 31235
