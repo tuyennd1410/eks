@@ -1,0 +1,11 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: vietaws1 # Name of the EKS Cluster
+  region: ap-southeast-1
+fargateProfiles:
+  - name: home-fp
+    selectors:
+      # All workloads in the "home-ns" Kubernetes namespace will be
+      # scheduled onto Fargate:
+      - namespace: home-ns

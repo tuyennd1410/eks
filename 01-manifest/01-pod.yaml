@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    name: pod1
+    app: student
+    version: v1
+    env: dev
+    tier: front-end
+  name: pod1
+spec:
+  containers:
+    - image: vietaws/eks:v1
+      imagePullPolicy: Always
+      name: student
+      ports:
+        - containerPort: 8080
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
